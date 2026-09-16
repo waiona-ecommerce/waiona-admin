@@ -28,10 +28,14 @@ export function ComboForm({ categories, products, combo }: ComboFormProps) {
   const [items, setItems] = useState<ItemRow[]>(
     combo?.items.map((item) => ({ ...item })) ?? [],
   )
-  const [newProductId, setNewProductId] = useState(String(products[0]?.id ?? ''))
+  const [newProductId, setNewProductId] = useState('')
   const [newQuantity, setNewQuantity] = useState('1')
 
   function handleAddItem() {
+    if (!newProductId) {
+      toast.error('Elegí un producto')
+      return
+    }
     const product = products.find((p) => p.id === Number(newProductId))
     if (!product) return
     if (items.some((item) => item.productId === product.id)) {
@@ -146,6 +150,9 @@ export function ComboForm({ categories, products, combo }: ComboFormProps) {
             onChange={(e) => setNewProductId(e.target.value)}
             className="flex-1 rounded border px-2 py-1 text-sm"
           >
+            <option value="" disabled>
+              -- Seleccionar --
+            </option>
             {products.map((product) => (
               <option key={product.id} value={product.id}>
                 {product.name}

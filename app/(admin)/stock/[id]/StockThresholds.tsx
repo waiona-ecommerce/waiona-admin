@@ -31,24 +31,28 @@ export function StockThresholds({ item }: { item: StockItemResponseDto }) {
   return (
     <form onSubmit={handleSubmit} className="flex max-w-sm flex-col gap-3 rounded border p-3">
       <span className="text-sm font-medium">Umbrales</span>
-      <input
-        required
-        type="number"
-        min={1}
-        value={stockMin}
-        onChange={(e) => setStockMin(e.target.value)}
-        placeholder="Stock mínimo"
-        className="rounded border px-3 py-2"
-      />
-      <input
-        required
-        type="number"
-        min={0}
-        value={stockCritical}
-        onChange={(e) => setStockCritical(e.target.value)}
-        placeholder="Stock crítico"
-        className="rounded border px-3 py-2"
-      />
+      <label className="flex flex-col gap-1 text-sm">
+        Stock mínimo
+        <input
+          required
+          type="number"
+          min={1}
+          value={stockMin}
+          onChange={(e) => setStockMin(e.target.value)}
+          className="rounded border px-3 py-2"
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        Stock crítico
+        <input
+          required
+          type="number"
+          min={0}
+          value={stockCritical}
+          onChange={(e) => setStockCritical(e.target.value)}
+          className="rounded border px-3 py-2"
+        />
+      </label>
       <button
         type="submit"
         disabled={isPending}
