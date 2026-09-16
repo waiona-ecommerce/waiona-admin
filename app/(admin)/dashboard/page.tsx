@@ -44,9 +44,9 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile label="Órdenes totales" value={orders.total} />
-        <StatTile label="Facturación total" value={money(orders.totalRevenue)} />
-        <StatTile label="Facturación hoy" value={money(orders.revenueToday)} />
-        <StatTile label="Facturación este mes" value={money(orders.revenueThisMonth)} />
+        <StatTile label="Pipeline total" value={money(orders.totalRevenue)} />
+        <StatTile label="Pipeline hoy" value={money(orders.revenueToday)} />
+        <StatTile label="Pipeline este mes" value={money(orders.revenueThisMonth)} />
       </div>
 
       <div>

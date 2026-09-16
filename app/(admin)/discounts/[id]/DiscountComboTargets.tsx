@@ -22,7 +22,7 @@ export function DiscountComboTargets({ discountId, targets, combos }: DiscountCo
   const assignableCombos = combos.filter(
     (combo) => !targets.some((target) => target.comboId === combo.id),
   )
-  const [comboId, setComboId] = useState(String(assignableCombos[0]?.id ?? ''))
+  const [comboId, setComboId] = useState('')
 
   function comboName(id: number) {
     return combos.find((combo) => combo.id === id)?.name ?? `#${id}`
@@ -79,10 +79,14 @@ export function DiscountComboTargets({ discountId, targets, combos }: DiscountCo
       {assignableCombos.length > 0 && (
         <form onSubmit={handleAdd} className="flex items-center gap-2">
           <select
+            required
             value={comboId}
             onChange={(e) => setComboId(e.target.value)}
             className="flex-1 rounded border px-2 py-1 text-sm"
           >
+            <option value="" disabled>
+              -- Seleccionar --
+            </option>
             {assignableCombos.map((combo) => (
               <option key={combo.id} value={combo.id}>
                 {combo.name}

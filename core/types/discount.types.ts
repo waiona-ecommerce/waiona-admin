@@ -3,6 +3,8 @@ export interface DiscountResponseDto {
   name: string
   description: string | null
   value: number
+  startsAt: string | null
+  endsAt: string | null
   createdAt: string
   updatedAt: string
 }
@@ -11,6 +13,8 @@ export interface CreateDiscountDto {
   name: string
   description?: string
   value: number
+  startsAt?: string
+  endsAt?: string
 }
 
 export type UpdateDiscountDto = Partial<CreateDiscountDto>

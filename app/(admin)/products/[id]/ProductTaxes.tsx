@@ -19,7 +19,7 @@ export function ProductTaxes({ productId, productTaxes, taxes }: ProductTaxesPro
   const assignableTaxes = taxes.filter(
     (tax) => !tax.isGlobal && !productTaxes.some((pt) => pt.taxId === tax.id),
   )
-  const [taxId, setTaxId] = useState(String(assignableTaxes[0]?.id ?? ''))
+  const [taxId, setTaxId] = useState('')
 
   function handleAssign(e: React.FormEvent) {
     e.preventDefault()
@@ -74,10 +74,14 @@ export function ProductTaxes({ productId, productTaxes, taxes }: ProductTaxesPro
       {assignableTaxes.length > 0 && (
         <form onSubmit={handleAssign} className="flex items-center gap-2">
           <select
+            required
             value={taxId}
             onChange={(e) => setTaxId(e.target.value)}
             className="flex-1 rounded border px-2 py-1 text-sm"
           >
+            <option value="" disabled>
+              -- Seleccionar --
+            </option>
             {assignableTaxes.map((tax) => (
               <option key={tax.id} value={tax.id}>
                 {tax.code} — {tax.value}%

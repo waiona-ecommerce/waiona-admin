@@ -22,7 +22,7 @@ export function DiscountProductTargets({ discountId, targets, products }: Discou
   const assignableProducts = products.filter(
     (product) => !targets.some((target) => target.productId === product.id),
   )
-  const [productId, setProductId] = useState(String(assignableProducts[0]?.id ?? ''))
+  const [productId, setProductId] = useState('')
 
   function productName(id: number) {
     return products.find((product) => product.id === id)?.name ?? `#${id}`
@@ -79,10 +79,14 @@ export function DiscountProductTargets({ discountId, targets, products }: Discou
       {assignableProducts.length > 0 && (
         <form onSubmit={handleAdd} className="flex items-center gap-2">
           <select
+            required
             value={productId}
             onChange={(e) => setProductId(e.target.value)}
             className="flex-1 rounded border px-2 py-1 text-sm"
           >
+            <option value="" disabled>
+              -- Seleccionar --
+            </option>
             {assignableProducts.map((product) => (
               <option key={product.id} value={product.id}>
                 {product.name}

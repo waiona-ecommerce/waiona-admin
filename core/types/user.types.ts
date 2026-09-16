@@ -12,7 +12,10 @@ export interface UserResponseDto {
   id: number
   email: string
   isActive: boolean
-  role: RoleType
+  // true si un admin suspendió la cuenta (banId). Al banear, el backend
+  // revoca todos los refresh tokens activos del usuario.
+  isBanned: boolean
+  role: RoleType | null
   profile: UserProfile
   createdAt: string
   updatedAt: string
@@ -27,4 +30,8 @@ export interface UpdateUserDto {
 export interface SearchUsersDto extends PaginationQuery {
   email?: string
   name?: string
+}
+
+export interface UpdateUserStatusDto {
+  isBanned: boolean
 }

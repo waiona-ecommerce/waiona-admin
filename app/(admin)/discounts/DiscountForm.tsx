@@ -10,12 +10,18 @@ interface DiscountFormProps {
   discount?: DiscountResponseDto
 }
 
+function toDateInput(iso: string | null) {
+  return iso ? iso.slice(0, 10) : ''
+}
+
 export function DiscountForm({ discount }: DiscountFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [name, setName] = useState(discount?.name ?? '')
   const [description, setDescription] = useState(discount?.description ?? '')
   const [value, setValue] = useState(discount?.value != null ? String(discount.value) : '')
+  const [startsAt, setStartsAt] = useState(toDateInput(discount?.startsAt ?? null))
+  const [endsAt, setEndsAt] = useState(toDateInput(discount?.endsAt ?? null))
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -23,6 +29,8 @@ export function DiscountForm({ discount }: DiscountFormProps) {
       name: name.toUpperCase(),
       ...(description && { description: description.toUpperCase() }),
       value: Number(value),
+      ...(startsAt && { startsAt: new Date(startsAt).toISOString() }),
+      ...(endsAt && { endsAt: new Date(endsAt).toISOString() }),
     }
 
     startTransition(async () => {
@@ -65,6 +73,24 @@ export function DiscountForm({ discount }: DiscountFormProps) {
         placeholder="Valor (%)"
         className="rounded border px-3 py-2"
       />
+      <label className="flex flex-col gap-1 text-sm">
+        Vigencia desde (opcional)
+        <input
+          type="date"
+          value={startsAt}
+          onChange={(e) => setStartsAt(e.target.value)}
+          className="rounded border px-3 py-2"
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        Vigencia hasta (opcional)
+        <input
+          type="date"
+          value={endsAt}
+          onChange={(e) => setEndsAt(e.target.value)}
+          className="rounded border px-3 py-2"
+        />
+      </label>
       <button
         type="submit"
         disabled={isPending}
