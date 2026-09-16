@@ -8,8 +8,9 @@ import {
   deleteComboPricing,
   updateComboPricing,
 } from '@/actions/combo-pricing.actions'
+import { calculateComboPrice } from '@/actions/pricing-calculation.actions'
 import { CurrencyCode } from '@/core/enums'
-import type { ComboPricingResponseDto } from '@/core/types'
+import type { ComboPricingResponseDto, PriceBreakdownDto } from '@/core/types'
 
 interface ComboPricingProps {
   comboId: number
@@ -19,9 +20,22 @@ interface ComboPricingProps {
 export function ComboPricing({ comboId, pricing }: ComboPricingProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [isCalculating, startCalculation] = useTransition()
+  const [breakdown, setBreakdown] = useState<PriceBreakdownDto | null>(null)
   const [currency, setCurrency] = useState<CurrencyCode>(pricing?.currency ?? CurrencyCode.ARS)
   const [unitPrice, setUnitPrice] = useState(pricing?.unitPrice != null ? String(pricing.unitPrice) : '')
   const [salePrice, setSalePrice] = useState(pricing?.salePrice != null ? String(pricing.salePrice) : '')
+
+  function handlePreview() {
+    startCalculation(async () => {
+      const result = await calculateComboPrice(comboId)
+      if (!result.success) {
+        toast.error(result.message)
+        return
+      }
+      setBreakdown(result.data)
+    })
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -109,6 +123,31 @@ export function ComboPricing({ comboId, pricing }: ComboPricingProps) {
           )}
         </div>
       </form>
+
+      {pricing && (
+        <div className="border-t pt-3">
+          <button
+            type="button"
+            onClick={handlePreview}
+            disabled={isCalculating}
+            className="text-sm underline disabled:opacity-50"
+          >
+            {isCalculating ? 'Calculando...' : 'Ver precio final (con descuentos e impuestos)'}
+          </button>
+          {breakdown && (
+            <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
+              <dt className="text-neutral-500">Precio de venta</dt>
+              <dd>{breakdown.salePrice}</dd>
+              <dt className="text-neutral-500">Descuento</dt>
+              <dd>-{breakdown.discount}</dd>
+              <dt className="text-neutral-500">Impuestos</dt>
+              <dd>+{breakdown.taxes}</dd>
+              <dt className="font-medium">Precio final</dt>
+              <dd className="font-medium">{breakdown.finalPrice}</dd>
+            </dl>
+          )}
+        </div>
+      )}
     </div>
   )
 }

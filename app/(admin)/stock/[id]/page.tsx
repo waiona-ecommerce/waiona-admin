@@ -1,10 +1,12 @@
 import { notFound } from 'next/navigation'
 import { getStockItem } from '@/services/stock-item.service'
+import { getStockWriteOffsByStockItem } from '@/services/stock-writeoff.service'
 import { ApiError } from '@/core/lib/api'
 import { StockThresholds } from './StockThresholds'
 import { AddStockForm } from './AddStockForm'
 import { WriteOffForm } from './WriteOffForm'
 import { StockMovements } from './StockMovements'
+import { StockWriteOffs } from './StockWriteOffs'
 
 export default async function StockItemPage({
   params,
@@ -17,6 +19,7 @@ export default async function StockItemPage({
     if (error instanceof ApiError && error.statusCode === 404) notFound()
     throw error
   })
+  const writeOffs = await getStockWriteOffsByStockItem(Number(id))
 
   return (
     <div className="flex flex-col gap-6">
@@ -37,6 +40,7 @@ export default async function StockItemPage({
       </div>
 
       <StockMovements movements={item.movements} />
+      <StockWriteOffs writeOffs={writeOffs} />
     </div>
   )
 }

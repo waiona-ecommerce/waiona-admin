@@ -1,6 +1,7 @@
 import { getUsers } from '@/services/user.service'
 import { RoleType } from '@/core/enums'
 import Link from 'next/link'
+import { UserStatusActions } from './UserStatusActions'
 
 const ROLE_LABELS: Record<RoleType, string> = {
   [RoleType.SUPER_ADMIN]: 'Super admin',
@@ -29,8 +30,8 @@ export default async function UsersPage({
       <div>
         <h1 className="text-2xl font-semibold">Usuarios</h1>
         <p className="mt-1 text-sm text-neutral-500">
-          Solo lectura: la API no permite ver, editar ni borrar la cuenta de otro usuario, ni
-          siquiera con rol admin.
+          La API no permite ver, editar ni borrar el perfil de otro usuario, ni siquiera con rol
+          admin — solo suspender o reactivar su cuenta.
         </p>
       </div>
 
@@ -61,6 +62,8 @@ export default async function UsersPage({
             <th className="py-2">Nombre</th>
             <th className="py-2">Rol</th>
             <th className="py-2">Activo</th>
+            <th className="py-2">Estado</th>
+            <th className="py-2" />
           </tr>
         </thead>
         <tbody>
@@ -70,8 +73,14 @@ export default async function UsersPage({
               <td className="py-2">
                 {user.profile.name} {user.profile.lastName}
               </td>
-              <td className="py-2">{ROLE_LABELS[user.role]}</td>
+              <td className="py-2">{user.role ? ROLE_LABELS[user.role] : '—'}</td>
               <td className="py-2">{user.isActive ? 'Sí' : 'No'}</td>
+              <td className={`py-2 font-medium ${user.isBanned ? 'text-red-600' : 'text-green-600'}`}>
+                {user.isBanned ? 'Suspendido' : 'Normal'}
+              </td>
+              <td className="py-2 text-right">
+                <UserStatusActions id={user.id} isBanned={user.isBanned} />
+              </td>
             </tr>
           ))}
         </tbody>

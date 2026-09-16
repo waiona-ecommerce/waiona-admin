@@ -35,6 +35,10 @@ export interface OrderResponseDto {
   updatedAt: string
   userId: number
   status: OrderStatus
+  // Momento en que se libera la reserva de stock si la orden sigue PENDING
+  // (el backend la cancela automáticamente a los 30 min). Null en órdenes
+  // históricas creadas antes de este campo, o que ya salieron de PENDING.
+  expiresAt: string | null
   deliveryType: DeliveryType
   address: string | null
   notes: string | null
