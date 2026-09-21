@@ -1,17 +1,19 @@
 # Waiona Admin — Agents
 
-Todo lo que define cómo se trabaja en este proyecto vive acá, en `agents/`: el flujo SDD, las skills, los specs y el contexto del proyecto.
+Cómo se trabaja en este proyecto vive en `agents/` (flujo SDD, skills y contexto del proyecto). Los specs, en cambio, viven **fuera**, en `specs/` en la raíz del repo.
 
 ```
 agents/
 ├── AGENTS.md          este archivo: flujo + contexto del proyecto
-├── specs/             INDEX.md + un NN_nombre.md por spec
 └── skills/
     ├── spec-generator/ spec-implementer/ spec-verifier/     ← flujo
     ├── nextjs-app-router/ api-integration/ admin-ui-patterns/
     │   auth-session/ component-testing/ api-types-generation/
     │   verification-standard/                               ← dominio
     └── template/                                            ← plantilla para skills nuevas
+
+specs/
+└── INDEX.md           + un NN_nombre.md por cada spec
 ```
 
 `.claude/skills/spec-*` son symlinks a `agents/skills/spec-*`: existen solo para que Claude Code descubra los comandos `/spec-generator`, `/spec-implementer` y `/spec-verifier`. El contenido real está en `agents/skills/`.
@@ -24,7 +26,7 @@ Spec-Driven Development puro: spec aprobado → código → verificación. Sin o
 
 ## Principios
 
-1. **Spec antes que código.** Nada se implementa sin un spec aprobado en `agents/specs/`.
+1. **Spec antes que código.** Nada se implementa sin un spec aprobado en `specs/`.
 2. **El spec es autocontenido.** `spec-implementer` corre sin el historial de la conversación que originó el spec — si algo no está escrito ahí, no existe. Eso incluye el fragmento del contrato del backend que la feature usa.
 3. **Cambio de comportamiento = editar el spec primero, el código después.** Nunca al revés.
 4. **Requisitos en notación EARS** (`WHEN <trigger> THE SYSTEM SHALL <respuesta>`) — no bullets ambiguos.
@@ -38,7 +40,7 @@ Spec-Driven Development puro: spec aprobado → código → verificación. Sin o
 
 | Skill | Qué hace | Archivo |
 |---|---|---|
-| `spec-generator` | Investiga el código y el contrato del backend, entrevista si falta info, escribe `agents/specs/NN_nombre.md` con RF en EARS | `skills/spec-generator/SKILL.md` |
+| `spec-generator` | Investiga el código y el contrato del backend, entrevista si falta info, escribe `specs/NN_nombre.md` con RF en EARS | `skills/spec-generator/SKILL.md` |
 | `spec-implementer` | Implementa exactamente lo que dice el spec, chequeo de tipos por paso, rama propia | `skills/spec-implementer/SKILL.md` |
 | `spec-verifier` | Valida RF por RF + checklist de seguridad, cierra el spec, entrega commit/PR listos | `skills/spec-verifier/SKILL.md` |
 
