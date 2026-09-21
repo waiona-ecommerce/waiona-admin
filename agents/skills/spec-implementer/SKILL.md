@@ -1,6 +1,6 @@
 ---
 name: spec-implementer
-description: Segundo paso del flujo SDD de Waiona Admin. Implementa código a partir de un spec en agents/specs/NN_nombre.md ya aprobado por el usuario, con chequeo de tipos en cada paso, en rama propia. Usar después de que el usuario aprobó un spec generado con /spec-generator, o cuando invoca /spec-implementer.
+description: Segundo paso del flujo SDD de Waiona Admin. Implementa código a partir de un spec en specs/NN_nombre.md ya aprobado por el usuario, con chequeo de tipos en cada paso, en rama propia. Usar después de que el usuario aprobó un spec generado con /spec-generator, o cuando invoca /spec-implementer.
 ---
 
 Implementás exactamente lo que dice el spec — ni más, ni menos. El spec es tu única fuente de verdad; no tenés el resto de la conversación que lo originó.

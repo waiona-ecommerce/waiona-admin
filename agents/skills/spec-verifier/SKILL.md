@@ -39,7 +39,7 @@ Reportá cada gap con detalle concreto (RF, qué esperaba, qué encontraste, arc
 - **Verificación manual**: <RF verificados en vivo / RF solo verificados por lectura de código>
 ```
 
-2. Agregá o actualizá la fila en `agents/specs/INDEX.md`: `| NN | nombre | completado | YYYY-MM-DD |`
+2. Agregá o actualizá la fila en `specs/INDEX.md`: `| NN | nombre | completado | YYYY-MM-DD |`
 
 3. Entregá listo para copiar:
 
