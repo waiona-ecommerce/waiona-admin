@@ -38,13 +38,14 @@ export async function proxy(request: NextRequest) {
   if (isValidAdmin(accessToken)) return NextResponse.next()
 
   if (refreshToken) {
+    // Si el backend no responde, se trata como refresh fallido y se redirige al login
     const res = await fetch(`${API_URL}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: refreshToken }),
-    })
+    }).catch(() => null)
 
-    if (res.ok) {
+    if (res?.ok) {
       const { access_token, refresh_token } = await res.json()
       if (isValidAdmin(access_token)) {
         const response = NextResponse.next()
