@@ -5,8 +5,8 @@ import { OrderStatus } from '@/core/enums'
 const STATUS_LABELS: Record<OrderStatus, string> = {
   [OrderStatus.PENDING]: 'Pendiente',
   [OrderStatus.CONFIRMED]: 'Confirmada',
-  [OrderStatus.DISPATCHED]: 'Despachada',
-  [OrderStatus.DELIVERED]: 'Entregada',
+  [OrderStatus.DISPATCHED]: 'Lista para retirar',
+  [OrderStatus.DELIVERED]: 'Retirada',
   [OrderStatus.CANCELLED]: 'Cancelada',
 }
 

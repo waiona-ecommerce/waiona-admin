@@ -9,9 +9,9 @@ export interface CreateOrderItemDto {
 
 export interface CreateOrderDto {
   items: CreateOrderItemDto[]
-  deliveryType: DeliveryType
-  // Requerido si deliveryType === 'delivery'.
-  address?: string
+  // Solo retiro en el local: el backend guarda siempre 'pickup' y rechaza
+  // 'delivery' o una address con texto.
+  deliveryType?: DeliveryType
   couponCode?: string
   notes?: string
 }
