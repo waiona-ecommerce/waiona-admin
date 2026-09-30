@@ -6,6 +6,9 @@ export interface UserProfile {
   name: string
   lastName: string
   avatar: string | null
+  // YYYY-MM-DD. No editable: el backend rechaza birthDate en PATCH /users/:id.
+  // Usuarios creados antes del requisito de +18 tienen 2000-01-01 de relleno.
+  birthDate: string
 }
 
 export interface UserResponseDto {

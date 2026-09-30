@@ -17,8 +17,8 @@ const NEXT_STATUSES: Record<OrderStatus, OrderStatus[]> = {
 const STATUS_LABELS: Record<OrderStatus, string> = {
   [OrderStatus.PENDING]: 'Pendiente',
   [OrderStatus.CONFIRMED]: 'Confirmar',
-  [OrderStatus.DISPATCHED]: 'Despachar',
-  [OrderStatus.DELIVERED]: 'Marcar entregada',
+  [OrderStatus.DISPATCHED]: 'Marcar lista para retirar',
+  [OrderStatus.DELIVERED]: 'Marcar retirada',
   [OrderStatus.CANCELLED]: 'Cancelar',
 }
 
