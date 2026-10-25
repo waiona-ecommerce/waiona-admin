@@ -61,7 +61,7 @@ export default async function UsersPage({
             <th className="py-2">Email</th>
             <th className="py-2">Nombre</th>
             <th className="py-2">Rol</th>
-            <th className="py-2">Activo</th>
+            <th className="py-2">Perfil completo</th>
             <th className="py-2">Estado</th>
             <th className="py-2" />
           </tr>
@@ -71,10 +71,10 @@ export default async function UsersPage({
             <tr key={user.id} className="border-b">
               <td className="py-2">{user.email}</td>
               <td className="py-2">
-                {user.profile.name} {user.profile.lastName}
+                {user.profile ? `${user.profile.name} ${user.profile.lastName}` : '—'}
               </td>
               <td className="py-2">{user.role ? ROLE_LABELS[user.role] : '—'}</td>
-              <td className="py-2">{user.isActive ? 'Sí' : 'No'}</td>
+              <td className="py-2">{user.profile ? 'Sí' : 'No'}</td>
               <td className={`py-2 font-medium ${user.isBanned ? 'text-red-600' : 'text-green-600'}`}>
                 {user.isBanned ? 'Suspendido' : 'Normal'}
               </td>

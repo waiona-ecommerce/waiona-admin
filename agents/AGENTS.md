@@ -81,7 +81,7 @@ El cliente final usa una app mobile contra `/v1/shop`; este repo no tiene UI de 
 | Lenguaje | TypeScript (`strict`), alias `@/*` → raíz |
 | Estilos | Tailwind CSS, clases utilitarias directas |
 | Toasts | sonner |
-| Auth | JWT del backend en cookies httpOnly |
+| Auth | Auth0 (`@auth0/nextjs-auth0` v4, Regular Web App): sesión del SDK en cookie cifrada; el token nunca llega al navegador |
 | Lint | ESLint (`eslint-config-next`) |
 | Tests | Definidos, sin instalar: Vitest + Testing Library para componentes — ver `component-testing` |
 
@@ -92,7 +92,8 @@ El cliente final usa una app mobile contra `/v1/shop`; este repo no tiene UI de 
 ```
 app/
 ├── layout.tsx                    → root: fuentes, <Toaster />
-├── (auth)/login/                 → LoginForm + page
+├── sin-acceso/                   → "No tenés acceso al panel" (logueado sin rol admin)
+├── error-login/                  → error del callback de Auth0 (ej. email sin verificar)
 └── (admin)/                      → layout con Nav lateral + LogoutButton
     ├── Nav.tsx                   → NAV_ITEMS (agregar acá cada módulo nuevo)
     └── <módulo>/                 → categories, combos, coupons, dashboard, discounts,
@@ -104,24 +105,29 @@ app/
 actions/<x>.actions.ts            → escrituras ('use server')
 services/<x>.service.ts           → lecturas (Server Components)
 core/
-├── config/                       → env.ts (API_URL), constants.ts (AUTH_COOKIES, TTL, paginación)
+├── config/                       → env.ts (API_URL), constants.ts (paginación, imágenes, idempotencia)
 ├── enums/                        → espejo de los enums del backend
-├── lib/                          → api.ts (apiRequest/apiUpload/ApiError), cookies.ts
+├── lib/                          → api.ts (apiRequest/apiUpload/ApiError), auth0.ts (cliente del SDK, rol al loguearse)
 └── types/                        → DTOs espejo del backend (barrel: @/core/types)
-proxy.ts                          → guard de sesión (Next 16: NO es middleware.ts)
+proxy.ts                          → auth0.middleware + guard de rol (Next 16: NO es middleware.ts)
 ```
 
 Módulo de referencia para un CRUD con relaciones: `app/(admin)/coupons/`.
 
 ## Flujo de Auth
 
-1. `login` (action) llama `POST /auth/login` y guarda `access_token` (15 min) y `refresh_token` (30 días) en cookies httpOnly.
-2. `proxy.ts` corre en cada request: si el access token es válido y el rol es `ADMIN`/`SUPER_ADMIN` deja pasar; si no, intenta refrescar con `POST /auth/refresh`; si falla, redirige a `/login?from=<ruta>`.
-3. `apiRequest` (server-only) lee el access token de las cookies y lo manda como `Bearer`.
-4. El backend **rota** el refresh token en cada uso: solo `proxy.ts` refresca.
-5. `logout` llama al backend y borra ambas cookies.
+El login es **Auth0 (Universal Login)**; el panel no tiene formulario propio ni permite registrarse (lo bloquea una Action de Auth0). Lo usan solo `super_admin` y `admin`. Spec: `specs/01_migracion_auth0.md`.
 
-`proxy.ts` no verifica la firma del JWT: es un filtro de UX. La autorización real la impone el backend.
+1. `proxy.ts` delega primero en `auth0.middleware()`, que monta `/auth/login`, `/auth/logout` y `/auth/callback` y hace rolling de la sesión.
+2. Sin sesión → `/auth/login?returnTo=<ruta>`.
+3. Al crear la sesión, `beforeSessionSaved` (`core/lib/auth0.ts`) consulta `GET /auth/me` con el access token y guarda `role` en `session.user`. El token de Auth0 no trae el rol. Si `/auth/me` falla, la sesión queda sin rol.
+4. Con sesión: rol `admin` o `super_admin` → pasa. Si no → `/sin-acceso`.
+5. `proxy.ts` renueva el access token con `auth0.getAccessToken(req, res)`, que persiste el token nuevo. Si falla → login. Los Server Components y Actions no pueden escribir cookies.
+6. `apiRequest`/`apiUpload` (server-only) toman el token con `auth0.getAccessToken()` y lo mandan como `Bearer`.
+7. Un error del callback (`onCallback`) → `/error-login?description=...`.
+8. Logout: link a `/auth/logout`, que cierra la sesión del panel y la de Auth0.
+
+El rol se guarda al loguearse: un cambio de rol o una suspensión se ven en el panel al volver a entrar, pero la API los aplica en el acto. La autorización real la impone el backend en cada request.
 
 ## Convenciones
 
@@ -137,6 +143,11 @@ Detalle y ejemplos en las skills de dominio; acá el resumen.
 | Variable | Default | Uso |
 |---|---|---|
 | `API_URL` | `http://localhost:3000/v1` | Base de la API de `waiona-core` (ya incluye `/v1`) |
+| `AUTH0_DOMAIN` | — | Host del tenant, ej. `dev-znayvi14lcxny8d4.us.auth0.com` |
+| `AUTH0_CLIENT_ID` / `AUTH0_CLIENT_SECRET` | — | Application `Waiona Web` (Regular Web App) en Auth0. **Secreto** |
+| `AUTH0_SECRET` | — | Cifra la cookie de sesión: `openssl rand -hex 32`. **Secreto** |
+| `APP_BASE_URL` | — | `http://localhost:3001` en dev |
+| `AUTH0_AUDIENCE` | — | `https://api.waiona.com`; sin esto el token no sirve para la API |
 
 `.env.local` no se commitea.
 

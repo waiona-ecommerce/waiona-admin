@@ -1,72 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AUTH_COOKIES, AUTH_TOKEN_TTL } from '@/core/config/constants'
-import { API_URL } from '@/core/config/env'
-import { cookieOptions } from '@/core/lib/cookies'
+import { auth0 } from '@/core/lib/auth0'
 import { RoleType } from '@/core/enums'
-import type { JwtPayload } from '@/core/types'
 
-const PUBLIC_PATHS = ['/login']
 const ADMIN_ROLES: RoleType[] = [RoleType.ADMIN, RoleType.SUPER_ADMIN]
-
-function decodeToken(token: string): (JwtPayload & { exp: number }) | null {
-  try {
-    const payload = token.split('.')[1]
-    return JSON.parse(Buffer.from(payload, 'base64url').toString())
-  } catch {
-    return null
-  }
-}
-
-function isValidAdmin(token: string | undefined): boolean {
-  if (!token) return false
-  const decoded = decodeToken(token)
-  if (!decoded) return false
-  if (Date.now() >= decoded.exp * 1000) return false
-  return ADMIN_ROLES.includes(decoded.role as RoleType)
-}
+const NO_ACCESS_PATH = '/sin-acceso'
+const LOGIN_ERROR_PATH = '/error-login'
 
 export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl
-  const accessToken = request.cookies.get(AUTH_COOKIES.accessToken)?.value
-  const refreshToken = request.cookies.get(AUTH_COOKIES.refreshToken)?.value
+  // Monta /auth/login, /auth/logout y /auth/callback, y hace rolling de la sesión
+  const authResponse = await auth0.middleware(request)
+  const { pathname, search } = request.nextUrl
 
-  if (PUBLIC_PATHS.includes(pathname)) {
-    if (isValidAdmin(accessToken)) return NextResponse.redirect(new URL('/', request.url))
-    return NextResponse.next()
+  if (pathname.startsWith('/auth/') || pathname === LOGIN_ERROR_PATH) return authResponse
+
+  const session = await auth0.getSession(request)
+  const isAdmin = ADMIN_ROLES.includes(session?.user.role as RoleType)
+
+  if (pathname === NO_ACCESS_PATH) {
+    return isAdmin ? NextResponse.redirect(new URL('/', request.url)) : authResponse
   }
 
-  if (isValidAdmin(accessToken)) return NextResponse.next()
+  const loginUrl = new URL('/auth/login', request.url)
+  loginUrl.searchParams.set('returnTo', `${pathname}${search}`)
 
-  if (refreshToken) {
-    // Si el backend no responde, se trata como refresh fallido y se redirige al login
-    const res = await fetch(`${API_URL}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    }).catch(() => null)
+  if (!session) return NextResponse.redirect(loginUrl)
+  if (!isAdmin) return NextResponse.redirect(new URL(NO_ACCESS_PATH, request.url))
 
-    if (res?.ok) {
-      const { access_token, refresh_token } = await res.json()
-      if (isValidAdmin(access_token)) {
-        const response = NextResponse.next()
-        response.cookies.set(
-          AUTH_COOKIES.accessToken,
-          access_token,
-          cookieOptions(AUTH_TOKEN_TTL.accessTokenMinutes * 60),
-        )
-        response.cookies.set(
-          AUTH_COOKIES.refreshToken,
-          refresh_token,
-          cookieOptions(AUTH_TOKEN_TTL.refreshTokenDays * 24 * 60 * 60),
-        )
-        return response
-      }
-    }
+  // Renueva el access token acá (el SDK persiste el token nuevo en la cookie);
+  // los Server Components y Actions no pueden escribir cookies. Si el refresh
+  // falla, la sesión ya no sirve.
+  try {
+    await auth0.getAccessToken(request, authResponse)
+  } catch {
+    return NextResponse.redirect(loginUrl)
   }
 
-  const loginUrl = new URL('/login', request.url)
-  loginUrl.searchParams.set('from', pathname)
-  return NextResponse.redirect(loginUrl)
+  return authResponse
 }
 
 export const config = {

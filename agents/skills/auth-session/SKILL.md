@@ -1,25 +1,25 @@
 ---
 name: auth-session
 description: >
-  Sesión del admin: cookies httpOnly access/refresh, refresh de tokens en proxy.ts, roles ADMIN y SUPER_ADMIN, login/logout.
-  Cargar al tocar login, logout, proxy.ts, cookies o restricciones por rol.
+  Sesión del admin con Auth0 (@auth0/nextjs-auth0 v4): proxy.ts con auth0.middleware, rol leído de GET /auth/me al loguearse,
+  renovación del token en el proxy, roles ADMIN y SUPER_ADMIN, logout.
+  Cargar al tocar login, logout, proxy.ts, la sesión o restricciones por rol.
 metadata:
   author: "@rodrigozucchini"
-  version: "1.0"
+  version: "2.0"
 ---
 
 # Auth Session Skill
 
-Cómo se mantiene la sesión del admin contra el JWT del backend. Basado en `proxy.ts`, `actions/auth.actions.ts` y `core/lib/cookies.ts`.
+Cómo se mantiene la sesión del admin desde la migración a Auth0 (`specs/01_migracion_auth0.md`). Basado en `proxy.ts` y `core/lib/auth0.ts`.
 
 ---
 
 ## Cuándo usar esta skill
 
 Cargar cuando se:
-- Modifica login, logout o `proxy.ts`
+- Modifica `proxy.ts`, `core/lib/auth0.ts`, las páginas `/sin-acceso` o `/error-login`, o el logout
 - Agrega una restricción por rol
-- Toca `core/lib/cookies.ts` o `AUTH_COOKIES` / `AUTH_TOKEN_TTL`
 
 No cargar para:
 - Llamadas a endpoints de negocio (usar `api-integration`)
@@ -28,13 +28,14 @@ No cargar para:
 
 ## Reglas
 
-1. **Tokens solo en cookies httpOnly** (`access_token`, `refresh_token`), creadas con `cookieOptions(maxAge)`. Nunca en `localStorage`, en estado de React ni en `NEXT_PUBLIC_*`.
-2. **TTL espejo del backend** (`core/config/constants.ts`): access 15 min, refresh 30 días. Si el backend cambia, se cambia ahí.
-3. **El refresh se hace solo en `proxy.ts`.** El backend rota el refresh token en cada uso: si dos lugares refrescan a la vez, el segundo falla. Los Server Components no pueden escribir cookies, así que no refrescan.
-4. **Solo entran `ADMIN` y `SUPER_ADMIN`** (`ADMIN_ROLES` en `proxy.ts`). Un token válido con rol `CLIENT` se trata como no autenticado.
-5. **`proxy.ts` valida `exp` y rol leyendo el payload del JWT**, sin verificar la firma: es un filtro de UX, no seguridad. La autorización real la impone el backend en cada request. Que la UI oculte algo por rol no lo protege.
-6. **Rutas públicas**: solo `/login` (`PUBLIC_PATHS`). Sin sesión válida se redirige a `/login?from=<ruta>`.
-7. **Logout**: llama al backend con el refresh token (ignorando errores) y borra ambas cookies.
+1. **Login, registro y contraseñas los maneja Auth0** (Universal Login). El panel no tiene formulario de login ni link de "Registrarse". El registro desde el panel lo bloquea una Action de Auth0.
+2. **La sesión es del SDK:** cookie cifrada con `AUTH0_SECRET`. El access token **nunca** llega al navegador. No se crean cookies propias de tokens ni se usa `localStorage`.
+3. **El rol no viaja en el token.** Se consulta `GET /auth/me` una sola vez, en `beforeSessionSaved`, y se guarda en `session.user.role`. Nunca decodificar el JWT para sacar el rol.
+4. **Solo entran `ADMIN` y `SUPER_ADMIN`** (`ADMIN_ROLES` en `proxy.ts`). Con sesión pero sin esos roles → `/sin-acceso`. Sin sesión → `/auth/login?returnTo=<ruta>`.
+5. **El token se renueva solo en `proxy.ts`** (`auth0.getAccessToken(req, res)`), porque es el único lugar que puede persistir el token nuevo. `apiRequest`/`apiUpload` solo lo leen con `auth0.getAccessToken()`.
+6. **Rutas públicas:** `/auth/*` (SDK), `/sin-acceso` y `/error-login`. Cualquier ruta nueva queda protegida por el matcher.
+7. **Logout:** link común (`<a>`) a `/auth/logout`, que cierra la sesión del panel y la de Auth0.
+8. **El filtro de rol del panel es UX, no seguridad.** La autorización real la impone el backend en cada request: lee rol y suspensión de la DB.
 
 ---
 
@@ -42,20 +43,23 @@ No cargar para:
 
 **Hacer:**
 ```ts
-store.set(AUTH_COOKIES.accessToken, access_token, cookieOptions(AUTH_TOKEN_TTL.accessTokenMinutes * 60))
+const { token } = await auth0.getAccessToken()        // en apiRequest (server-only)
+const session = await auth0.getSession(request)       // en proxy.ts
+session?.user.role                                     // rol guardado al loguearse
 ```
 
 **No hacer:**
 ```ts
-localStorage.setItem('token', access_token)              // ❌ accesible desde JS
-store.set('access_token', t, { maxAge: 900 })            // ❌ sin httpOnly, TTL hardcodeado
+JSON.parse(atob(token.split('.')[1])).role            // ❌ el token de Auth0 no trae rol
+store.set('access_token', token)                       // ❌ la sesión es del SDK
+<Link href="/auth/logout">                             // ❌ no es una página de Next: usar <a>
 ```
 
 ---
 
 ## Errores comunes
 
-- **Intentar refrescar el token desde un service/Server Component**: no puede setear cookies y puede invalidar el refresh token.
-- **Confiar en el rol del payload para proteger algo sensible**: es solo UX.
-- **Agregar una ruta a `PUBLIC_PATHS` "para probar"** y dejarla.
-- **Loguear tokens o credenciales** en consola o en el spec.
+- **Olvidar `AUTH0_AUDIENCE`:** el token no sirve para la API y todo responde 401.
+- **Renovar el token desde un Server Component:** el token nuevo no se persiste.
+- **Esperar que un cambio de rol se vea al instante en el menú:** se ve al volver a loguearse. La API sí lo aplica al instante.
+- **Loguear tokens o el Client Secret** en consola o en el spec.
