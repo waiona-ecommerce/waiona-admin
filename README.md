@@ -21,3 +21,19 @@ Para el shape exacto de cada endpoint (parámetros, tipos, probar requests), la 
 > `waiona-core` es un repo privado — hace falta acceso de lectura ahí para ver estos links.
 >
 > Los links de arriba apuntan al branch `docs/wiki-migration-to-repo` porque esa migración de docs todavía no está mergeada a `develop` (al 2026-09-16). Cuando se mergee, actualizar estos links a `develop`.
+
+## Variables de entorno
+
+El login es con Auth0 (`@auth0/nextjs-auth0`). Crear `.env.local` (no se commitea):
+
+```properties
+API_URL=http://localhost:3000/v1
+AUTH0_DOMAIN=dev-znayvi14lcxny8d4.us.auth0.com
+AUTH0_CLIENT_ID=<Client ID de la Application "Waiona Web" en Auth0>
+AUTH0_CLIENT_SECRET=<Client Secret de "Waiona Web">
+AUTH0_SECRET=<openssl rand -hex 32>
+APP_BASE_URL=http://localhost:3001
+AUTH0_AUDIENCE=https://api.waiona.com
+```
+
+Detalle en `agents/AGENTS.md` (Flujo de Auth y Variables de Entorno).

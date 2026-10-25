@@ -1,27 +1,9 @@
-'use client'
-
-import { useTransition } from 'react'
-import { useRouter } from 'next/navigation'
-import { logout } from '@/actions/auth.actions'
-
+// Ruta del SDK de Auth0: cierra la sesión del panel y la de Auth0, y vuelve
+// a APP_BASE_URL. Es un link común (<a>): /auth/logout no es una página de Next.
 export function LogoutButton() {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-
-  function handleLogout() {
-    startTransition(async () => {
-      await logout()
-      router.push('/login')
-    })
-  }
-
   return (
-    <button
-      onClick={handleLogout}
-      disabled={isPending}
-      className="text-sm text-neutral-500 hover:text-neutral-900 disabled:opacity-50"
-    >
-      {isPending ? 'Saliendo...' : 'Cerrar sesión'}
-    </button>
+    <a href="/auth/logout" className="text-sm text-neutral-500 hover:text-neutral-900">
+      Cerrar sesión
+    </a>
   )
 }

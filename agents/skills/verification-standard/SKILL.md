@@ -52,7 +52,7 @@ Cargar siempre que se implemente o verifique un spec.
 - El camino feliz del RF y sus edge cases (lista vacía, error de la API, 404, 409, doble submit).
 - Toast correcto (éxito y error) y redirección.
 - Que la lista se actualice tras la escritura (`revalidatePath`).
-- Sesión: que sin cookie redirija a `/login`.
+- Sesión: que sin sesión redirija a `/auth/login` (Auth0).
 - Consola del navegador y terminal del dev server sin errores nuevos.
 
 ---

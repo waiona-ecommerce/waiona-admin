@@ -19,14 +19,3 @@ export const IMAGE_UPLOAD = {
 }
 
 export const IDEMPOTENCY_KEY_TTL_HOURS = 24
-
-// El backend expira el access token a los 15 min y rota el refresh token en cada uso.
-export const AUTH_TOKEN_TTL = {
-  accessTokenMinutes: 15,
-  refreshTokenDays: 30,
-} as const
-
-export const AUTH_COOKIES = {
-  accessToken: 'access_token',
-  refreshToken: 'refresh_token',
-} as const
