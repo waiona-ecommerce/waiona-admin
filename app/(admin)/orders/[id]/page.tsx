@@ -1,8 +1,9 @@
 import { notFound } from 'next/navigation'
 import { getOrder } from '@/services/order.service'
-import { getPaymentsByOrder } from '@/services/payment.service'
+import { getPaymentAttemptsByOrder } from '@/services/payment.service'
+import { getLedgerByOrder } from '@/services/ledger.service'
 import { ApiError } from '@/core/lib/api'
-import { OrderStatus, PaymentStatus, PaymentProvider } from '@/core/enums'
+import { LedgerDirection, OrderStatus, PaymentAttemptStatus } from '@/core/enums'
 import { OrderStatusActions } from './OrderStatusActions'
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
@@ -13,16 +14,19 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
   [OrderStatus.CANCELLED]: 'Cancelada',
 }
 
-const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
-  [PaymentStatus.PENDING]: 'Pendiente',
-  [PaymentStatus.APPROVED]: 'Aprobado',
-  [PaymentStatus.REJECTED]: 'Rechazado',
-  [PaymentStatus.CANCELLED]: 'Cancelado',
-}
+const money = (amount: number) => `$${amount.toLocaleString('es-AR')}`
 
-const PAYMENT_PROVIDER_LABELS: Record<PaymentProvider, string> = {
-  [PaymentProvider.MERCADOPAGO]: 'Mercado Pago',
-  [PaymentProvider.STRIPE]: 'Stripe',
+const PAYMENT_STATUS_LABELS: Record<PaymentAttemptStatus, string> = {
+  [PaymentAttemptStatus.NOT_STARTED]: 'Preparando',
+  [PaymentAttemptStatus.EXECUTING]: 'Preparando',
+  [PaymentAttemptStatus.PENDING]: 'Esperando el pago',
+  [PaymentAttemptStatus.UNKNOWN]: 'Sin confirmar',
+  [PaymentAttemptStatus.APPROVED]: 'Cobrado',
+  [PaymentAttemptStatus.FAILED]: 'Falló',
+  [PaymentAttemptStatus.CANCELLED]: 'Cancelado',
+  [PaymentAttemptStatus.PARTIALLY_REFUNDED]: 'Devolución parcial',
+  [PaymentAttemptStatus.REFUNDED]: 'Devuelto',
+  [PaymentAttemptStatus.CHARGEBACK]: 'Contracargo',
 }
 
 export default async function OrderPage({
@@ -36,7 +40,10 @@ export default async function OrderPage({
     if (error instanceof ApiError && error.statusCode === 404) notFound()
     throw error
   })
-  const payments = await getPaymentsByOrder(order.id)
+  const [attempts, ledger] = await Promise.all([
+    getPaymentAttemptsByOrder(order.id),
+    getLedgerByOrder(order.id),
+  ])
 
   return (
     <div className="flex flex-col gap-6">
@@ -76,19 +83,54 @@ export default async function OrderPage({
 
       <div className="max-w-sm rounded border p-3 text-sm">
         <span className="font-medium">Pagos</span>
-        {payments.length === 0 ? (
+        {attempts.length === 0 ? (
           <p className="mt-1 text-neutral-500">Sin pagos registrados.</p>
         ) : (
           <ul className="mt-1 flex flex-col gap-1">
-            {payments.map((payment) => (
-              <li key={payment.id} className="flex justify-between">
+            {attempts.map((attempt) => (
+              <li key={attempt.id} className="flex justify-between gap-4">
                 <span>
-                  {PAYMENT_PROVIDER_LABELS[payment.provider]} · ${payment.amount}
+                  {money(attempt.amount)} · {new Date(attempt.createdAt).toLocaleString('es-AR')}
                 </span>
-                <span>{PAYMENT_STATUS_LABELS[payment.status]}</span>
+                <span>{PAYMENT_STATUS_LABELS[attempt.status]}</span>
               </li>
             ))}
           </ul>
+        )}
+      </div>
+
+      <div className="max-w-2xl rounded border p-3 text-sm">
+        <span className="font-medium">Movimientos</span>
+        {ledger.length === 0 ? (
+          <p className="mt-1 text-neutral-500">Sin movimientos.</p>
+        ) : (
+          <table className="mt-1 w-full border-collapse text-left">
+            <thead>
+              <tr className="border-b">
+                <th className="py-1">Fecha</th>
+                <th className="py-1">Cuenta</th>
+                <th className="py-1">Debe</th>
+                <th className="py-1">Haber</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ledger.map((entry) => (
+                <tr key={entry.id} className="border-b">
+                  <td className="py-1">{new Date(entry.createdAt).toLocaleString('es-AR')}</td>
+                  <td className="py-1">
+                    {entry.account}
+                    {entry.taxCode ? ` (${entry.taxCode})` : ''}
+                  </td>
+                  <td className="py-1">
+                    {entry.direction === LedgerDirection.DEBIT ? money(entry.amount) : ''}
+                  </td>
+                  <td className="py-1">
+                    {entry.direction === LedgerDirection.CREDIT ? money(entry.amount) : ''}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
 
