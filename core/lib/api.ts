@@ -29,10 +29,11 @@ interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
   body?: unknown
   query?: Record<string, string | number | boolean | undefined>
+  headers?: Record<string, string>
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, query } = options
+  const { method = 'GET', body, query, headers } = options
   const token = await getApiToken()
 
   const url = new URL(`${API_URL}${path}`)
@@ -45,6 +46,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     headers: {
       'Content-Type': 'application/json',
       ...(token && { Authorization: `Bearer ${token}` }),
+      ...headers,
     },
     body: body ? JSON.stringify(body) : undefined,
   })

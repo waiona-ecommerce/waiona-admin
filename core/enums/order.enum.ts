@@ -10,3 +10,10 @@ export enum DeliveryType {
   DELIVERY = 'delivery',
   PICKUP = 'pickup',
 }
+
+export enum OrderReturnType {
+  RETURNED_OK = 'RETURNED_OK',
+  RETURNED_DAMAGED = 'RETURNED_DAMAGED',
+  EXCHANGED_DAMAGED = 'EXCHANGED_DAMAGED',
+  EXCHANGED_OK = 'EXCHANGED_OK',
+}
