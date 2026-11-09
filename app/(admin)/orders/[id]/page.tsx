@@ -1,9 +1,12 @@
 import { notFound } from 'next/navigation'
 import { getOrder } from '@/services/order.service'
 import { getPaymentsByOrder } from '@/services/payment.service'
+import { getOrderReturns } from '@/services/order-return.service'
 import { ApiError } from '@/core/lib/api'
 import { OrderStatus, PaymentStatus, PaymentProvider } from '@/core/enums'
 import { OrderStatusActions } from './OrderStatusActions'
+import { OrderReturnForm } from './OrderReturnForm'
+import { ORDER_RETURN_TYPE_LABELS } from './order-return-labels'
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
   [OrderStatus.PENDING]: 'Pendiente',
@@ -37,6 +40,12 @@ export default async function OrderPage({
     throw error
   })
   const payments = await getPaymentsByOrder(order.id)
+  const isDelivered = order.status === OrderStatus.DELIVERED
+  const returns = isDelivered ? await getOrderReturns(order.id) : []
+  const itemName = (id: number) => {
+    const item = order.items.find((candidate) => candidate.id === id)
+    return item?.productName ?? item?.comboName ?? `Ítem #${id}`
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -134,6 +143,28 @@ export default async function OrderPage({
           </tr>
         </tfoot>
       </table>
+
+      {isDelivered && (
+        <div className="flex flex-col gap-4">
+          <OrderReturnForm orderId={order.id} items={order.items} />
+          <div className="max-w-2xl rounded border p-3 text-sm">
+            <span className="font-medium">Devoluciones y cambios</span>
+            {returns.length === 0 ? (
+              <p className="mt-1 text-neutral-500">Sin devoluciones ni cambios.</p>
+            ) : (
+              <ul className="mt-1 flex flex-col gap-1">
+                {returns.map((row) => (
+                  <li key={row.id}>
+                    {new Date(row.createdAt).toLocaleString('es-AR')} · {itemName(row.orderItemId)}{' '}
+                    × {row.quantity} · {ORDER_RETURN_TYPE_LABELS[row.type]}
+                    {row.description ? ` · ${row.description}` : ''}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
