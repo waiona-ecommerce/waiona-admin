@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation'
 import { getOrder } from '@/services/order.service'
-import { getPaymentsByOrder } from '@/services/payment.service'
 import { getOrderReturns } from '@/services/order-return.service'
 import { getPaymentAttemptsByOrder } from '@/services/payment.service'
 import { getLedgerByOrder } from '@/services/ledger.service'
@@ -45,7 +44,6 @@ export default async function OrderPage({
     throw error
   })
 
-  const payments = await getPaymentsByOrder(order.id)
   const isDelivered = order.status === OrderStatus.DELIVERED
   const returns = isDelivered ? await getOrderReturns(order.id) : []
   const itemName = (id: number) => {
