@@ -11,6 +11,9 @@ export const auth0 = new Auth0Client({
   authorizationParameters: {
     audience: process.env.AUTH0_AUDIENCE,
     scope: 'openid profile email offline_access',
+    // Spec 04: siempre muestra la pantalla de Auth0. Si no, el panel reutiliza la
+    // sesión de Auth0 que haya en el navegador (p. ej. una cuenta de la app).
+    prompt: 'login',
   },
 
   // El token de Auth0 no trae el rol: se consulta una vez, al crear la
