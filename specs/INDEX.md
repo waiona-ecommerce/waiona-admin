@@ -8,5 +8,6 @@ Tabla maestra. Ver `agents/AGENTS.md` para el proceso completo.
 | 02 | pagos_flujo_nuevo | completado | 2026-11-09 |
 | 03 | devoluciones_y_cambios | completado | 2026-11-09 |
 | 04 | login_siempre_pide_cuenta | completado | 2026-11-13 |
+| 05 | notificaciones_campanita | completado | 2026-11-21 |
 
 <!-- spec-verifier agrega/actualiza una fila por spec al cerrar. -->
